@@ -28,6 +28,6 @@ Access domain parts:
     >>> d.sld
     u'example'
 
-Credits:
+## Credits
 
 Originally developed by [Mark Lee](https://github.com/malept) while employed at EVO Media Group.

@@ -27,3 +27,7 @@ Access domain parts:
 
     >>> d.sld
     u'example'
+
+Credits:
+
+Originally developed by [Mark Lee](https://github.com/malept) while employed at EVO Media Group.

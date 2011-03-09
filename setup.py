@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from distutils.core import setup
+from setuptools import setup, find_packages
 
 setup(
     name='domaintools',
@@ -8,8 +8,5 @@ setup(
     description='Domain parsing with python',
     author='DevHub',
     url='http://github.com/devhub/domaintools',
-    package_dir={'': 'src'},
-    py_modules=[
-        'domaintools',
-    ],
+    packages=find_packages(),
 )

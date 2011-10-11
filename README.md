@@ -28,6 +28,12 @@ Access domain parts:
     >>> d.sld
     u'example'
 
+IDN domain support
+
+    >>> d = Domain('xn--4gqx73hwke.com', decode_idna=True)
+    >>> d.domain
+    u'\u7edf\u4e00\u7801.com'
+
 ## Installation
 
     pip install 'git+git://github.com/devhub/domaintools.git'

@@ -47,11 +47,11 @@ class Domain(object):
     __valid_chars = re.compile(ur'^[a-z0-9.-]+$')
     __whitespace_regex = re.compile(ur'\s+')
 
-    def __init__(self, domain_string):
+    def __init__(self, domain_string, decode_idna=False):
         if u':' in domain_string:
             # strip out port numbers
             domain_string, port = domain_string.rsplit(u':', 1)
-        if 'xn--' in domain_string:
+        if decode_idna and 'xn--' in domain_string:
             # convert to IDN
             domain_string = domain_string.decode('idna')
         self.__full_domain = domain_string.lower()

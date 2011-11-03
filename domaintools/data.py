@@ -31,6 +31,13 @@ cctlds = ['ac', 'ad', 'ae', 'af', 'ag', 'ai', 'al', 'am', 'an', 'ao', 'aq',
           'tp', 'tr', 'tt', 'tv', 'tw', 'tz', 'ua', 'ug', 'uk', 'us', 'uy',
           'uz', 'va', 'vc', 've', 'vg', 'vi', 'vn', 'vu', 'wf', 'ws', 'ye',
           'yt', 'za', 'zm', 'zw', 'ht']
+'''Fake TLDs. (users get subdomains instead of valid SLDs)'''
+fake_tlds = {
+    'com': ['ar', 'br', 'cn', 'de', 'eu', 'gb', 'hu', 'jpn','kr', 'no', 'qc',
+            'ru', 'sa', 'se', 'uk', 'us', 'uy', 'za'],
+    'net': ['gb', 'se', 'uk'],
+    'org': ['ae'],
+    }
 
 # IDN ccTLDs.
 cctlds += [t.decode('idna') for t in [

@@ -9,7 +9,7 @@
 import re
 from urlparse import urlparse
 from data import (
-    cctlds, cctld_slds, no_custom_slds, some_custom_slds, tlds)
+    cctlds, cctld_slds, fake_tlds, no_custom_slds, some_custom_slds, tlds)
 
 
 def cached_property(f):
@@ -126,7 +126,9 @@ class Domain(object):
         '''
         result = None
         tld = self.__domain_parts[-1]
-        if tld in tlds:
+        if tld in fake_tlds and self.__domain_parts[-2] in fake_tlds[tld]:
+            result = self.__domain_parts[-2] + '.' + tld
+        elif tld in tlds:
             result = tld
         elif tld in cctlds:
             if len(self.__domain_parts) >= 2:

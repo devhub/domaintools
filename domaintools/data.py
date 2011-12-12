@@ -6,7 +6,7 @@
 '''Valid TLDs.'''
 tlds = ['aero', 'asia', 'biz', 'cat', 'com', 'coop', 'edu', 'gov', 'info',
         'int', 'jobs', 'mil', 'mobi', 'museum', 'name', 'net', 'org', 'pro',
-        'tel', 'travel']
+        'tel', 'travel', 'xxx']
 '''Valid ccTLDs.'''
 cctlds = ['ac', 'ad', 'ae', 'af', 'ag', 'ai', 'al', 'am', 'an', 'ao', 'aq',
           'ar', 'as', 'at', 'au', 'aw', 'ax', 'az', 'ba', 'bb', 'bd', 'be',

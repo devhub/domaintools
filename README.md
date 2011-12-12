@@ -459,6 +459,7 @@ IDN domain support
 	wf
 	ws
 	xj.cn
+	xxx
 	xz.cn
 	ye
 	yn.cn

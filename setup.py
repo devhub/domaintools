@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='domaintools',
-    version='0.3.1',
+    version='0.3.2',
     description='Domain parsing with python',
     author='DevHub',
     url='http://github.com/devhub/domaintools',

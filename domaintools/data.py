@@ -61,7 +61,7 @@ cctlds += [t.decode('idna') for t in [
 '''ccTLDs which do not allow custom SLDs.'''
 no_custom_slds = ['au', 'nz', 'uk', 'za']
 '''ccTLDs which allow custom SLDs, but also have two-level TLDs.'''
-some_custom_slds = ['ae', 'af', 'cn', 'ec', 'es', 'in', 'jp', 'mx', 'ph',
+some_custom_slds = ['ae', 'af', 'cn', 'co', 'ec', 'es', 'in', 'jp', 'mx', 'ph',
                     'pr', 'pro', 'pt', 'sg', 'tw', 'us']
 '''Valid SLDs for ccTLDs which do not allow custom SLDs, or have both schemes.
 '''
@@ -79,6 +79,7 @@ cctld_slds = {
            'ah', 'bj', 'cq', 'fj', 'gd', 'gs', 'gx', 'gz', 'ha', 'hb', 'he',
            'hi', 'hl', 'hn', 'jl', 'js', 'jx', 'ln', 'nm', 'nx', 'qh', 'sc',
            'sd', 'sh', 'sn', 'sx', 'tj', 'tw', 'xj', 'xz', 'yn', 'zj'],
+    'co': ['com', 'net'],
     'ec': ['com', 'info', 'fin', 'med', 'net', 'org', 'pro'],
     'es': ['com', 'nom', 'org'],
     'in': ['co', 'firm', 'net', 'org', 'gen', 'ind'],

@@ -190,7 +190,9 @@ class Domain(object):
         >>> str(Domain('www.brokerdaze.xn--p1ai'))
         'www.brokerdaze.xn--p1ai'
         '''
-        return self.__full_domain.encode('idna')
+        frags = [self.subdomain] if self.subdomain else []
+        frags.extend([self.sld.encode('idna'), self.tld.encode('idna')])
+        return '.'.join(frags)
 
     def __eq__(self, other):
         '''Ensures that two ``Domain`` objects with the same domain name are

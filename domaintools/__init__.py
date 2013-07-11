@@ -154,6 +154,9 @@ class Domain(object):
         >>> d.valid
         False
         '''
+        if self.tld is None or self.sld is None:
+            # if we don't do this now, the call to __str__ will fail
+            return False
         result = True
         try:
             if len(self.__domain_parts) < 2 or u'' in self.__domain_parts or \

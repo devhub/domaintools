@@ -4,13 +4,25 @@
 ===============================================
 
 .. moduleauthor:: Mark Lee <markl@evomediagroup.com>
+.. moduleauthor:: Gerald Thibault <jt@evomediagroup.com>
 '''
-
+import dns.resolver
+import dns.query
+import logging
 import re
 from urlparse import urlparse
-from data import (
-    cctlds, cctld_slds, fake_tlds, no_custom_slds, some_custom_slds, tlds)
+#from data import (
+#    cctlds, cctld_slds, fake_tlds, no_custom_slds, some_custom_slds) #, tlds)
 
+try:
+    from .data import TLDS
+except:
+    TLDS = None
+
+
+logging.basicConfig()
+logger = logging.getLogger(__name__)
+#logger.setLevel(logging.INFO)
 
 def cached_property(f):
     '''Decorator which caches property values.
@@ -31,31 +43,53 @@ def cached_property(f):
     # needed so that doctests are properly discovered
     cached.__doc__ = f.__doc__
     return property(cached)
+"""
+def parse_data_file(filename):
+    # file is at https://publicsuffix.org/list/effective_tld_names.dat
+    f = open(filename)
+    private = False
+    tlds = {}
+    for line in f:
+        line = line.strip().decode('utf8')
+        if line.startswith('// ===BEGIN PRIVATE DOMAINS==='):
+            private = True
+            continue
+        if not line or line.startswith('//'):
+            continue
+        line = line.encode('idna')
+        frags = line.split('.')
+        if frags[-1] not in tlds:
+            tlds[frags[-1]] = {}
+        tlds[frags[-1]][line] = private
+    
+    return tlds
 
+TLDS = parse_data_file('/home/jayte/domaintools/domaintools/effective_tld_names.dat')
+"""
 
 class Domain(object):
-    '''Handles parsing domains. Does not currently handle IDN. All domain names
-    are canonicalized via lowercasing.
+    '''Handles parsing domains. All domain names are canonicalized 
+        via lowercasing and conversion to punycode. __unicode__ will
+        return the decoded version
 
     TODO make sure it's compliant with http://tools.ietf.org/html/rfc1035
 
     :param domain_string: the domain name to parse.
     :type domain_string: unicode
     '''
-
-    # Per http://en.wikipedia.org/wiki/Domain_name#Allowed_character_set
-    __valid_chars = re.compile(ur'^[a-z0-9.-]+$')
     __whitespace_regex = re.compile(ur'\s+')
 
-    def __init__(self, domain_string, decode_idna=False):
+    def __init__(self, domain_string, allow_private=False):
+        if not TLDS:
+            raise Exception('TLDs could not be loaded from data.py. To create '
+                'the file, run _____') 
         if u':' in domain_string:
             # strip out port numbers
             domain_string, port = domain_string.rsplit(u':', 1)
-        if decode_idna and 'xn--' in domain_string:
-            # convert to IDN
-            domain_string = domain_string.decode('idna')
-        self.__full_domain = domain_string.lower()
-        self.__domain_parts = self.__full_domain.split(u'.')
+        self.allow_private = allow_private
+        self.__private = False
+        self.__full_domain = domain_string.lower().encode('idna')
+        self.__domain_parts = self.__full_domain.split('.')
         if self.__domain_parts[-1] == u'':
             self.__domain_parts.pop()
 
@@ -70,7 +104,7 @@ class Domain(object):
         u'brokerdaze.co.uk'
         '''
         if self.valid:
-            return u'%s.%s' % (self.sld, self.tld)
+            return '%s.%s' % (self.sld, self.tld)
         else:
             return None
 
@@ -87,11 +121,10 @@ class Domain(object):
         result = None
         tld = self.tld
         if tld is not None:
-            if '.' in tld:
-                if len(self.__domain_parts) >= 3:
-                    result = self.__domain_parts[-3]
-            elif len(self.__domain_parts) >= 2:
-                result = self.__domain_parts[-2]
+            dots = tld.count('.')
+            if dots == len(self.__domain_parts) - 1:
+                return None
+            result = self.__domain_parts[-2-dots]
         return result
 
     @cached_property
@@ -107,11 +140,10 @@ class Domain(object):
         result = None
         tld = self.tld
         if tld is not None:
-            if '.' in tld:
-                if len(self.__domain_parts) >= 4:
-                    result = u'.'.join(self.__domain_parts[:-3])
-            elif len(self.__domain_parts) >= 3:
-                result = u'.'.join(self.__domain_parts[:-2])
+            dots = tld.count('.')
+            if dots == len(self.__domain_parts) - 2:
+                return None
+            result = '.'.join(self.__domain_parts[:-2-dots])
         return result
 
     @cached_property
@@ -124,20 +156,60 @@ class Domain(object):
         >>> d.tld
         u'co.uk'
         '''
+        logger.info('Parsing TLD for domain: %s' % self.__full_domain)
         result = None
+        if len(self.__domain_parts) == 1:
+            logger.info('  Ignoring (too short)')
+            return result
         tld = self.__domain_parts[-1]
-        if tld in fake_tlds and self.__domain_parts[-2] in fake_tlds[tld]:
-            result = self.__domain_parts[-2] + '.' + tld
-        elif tld in tlds:
-            result = tld
-        elif tld in cctlds:
-            if len(self.__domain_parts) >= 2:
-                tld_sld = self.__domain_parts[-2]
-                if tld in (no_custom_slds + some_custom_slds) and \
-                   tld_sld in cctld_slds[tld]:
-                    result = u'%s.%s' % (tld_sld, tld)
-                elif tld not in no_custom_slds:
-                    result = tld
+        if tld in TLDS:
+            choices = TLDS[tld]
+            for i in range(len(self.__domain_parts)):
+                _parts = self.__domain_parts[-1-i:]
+                check = '.'.join(_parts)
+                logger.info('  Checking %s' % check)
+                if check in choices:
+                    logger.info('    Found match')  
+                    # found a match, first check if it's private
+                    self.__private = choices[check]
+                    if self.__private:
+                        logger.info('     -Private')
+                        if not self.allow_private:
+                            # ignore this and return the true tld
+                            self.__private = False
+                            logger.info('     -Ignoring (allow_private=False)')
+                            break
+                    # valid match, store it and try for a longer match
+                    result = check                
+                    continue
+
+                if i == 0:
+                    # do not try wildcard matches on single components
+                    continue
+                # check for wildcard
+                check2 = '.'.join(['*'] + _parts[1:])
+                logger.info('  Checking %s' % check2)
+                if check2 in choices:
+                    # wildcard found in choices, the tested tld is valid
+                    logger.info('    Found match')  
+                    result = check
+                if result:
+                    break
+        else:
+            # no match, assume it's a valid TLD not present in the dat file
+            # try an SOA check to make sure it exists
+            logger.info('  Not found in TLD list. Trying SOA check')
+            try:
+                answers = dns.resolver.query(qname = dns.name.from_text(tld),
+                                             rdtype='soa')
+                assert answers
+                logger.info('    SOA record found, assuming valid')
+                result = tld
+            except Exception as e:
+                # SOA not found
+                logging.info('    SOA record not found, assuming invalid')
+                pass
+        logger.info('  Returning effective TLD: %s' % result)
         return result
 
     @cached_property
@@ -154,19 +226,15 @@ class Domain(object):
         >>> d.valid
         False
         '''
-        if self.tld is None or self.sld is None:
-            # if we don't do this now, the call to __str__ will fail
+        if self.tld is None or self.sld is None or '' in self.__domain_parts:
             return False
-        result = True
-        try:
-            if len(self.__domain_parts) < 2 or u'' in self.__domain_parts or \
-               self.__valid_chars.match(self.__str__()) is None or \
-               '' in self.__domain_parts or self.tld is None or \
-               self.sld is None:
-                result = False
-        except UnicodeError:
-            result = False
-        return result
+        return True
+
+    @cached_property
+    def private(self):
+        if self.tld is None:
+            return False
+        return self.__private
 
     def __repr__(self):
         '''Generates a representation of the object, with the domain as an
@@ -183,7 +251,7 @@ class Domain(object):
         >>> unicode(Domain('www.brokerdaze.co.uk'))
         u'www.brokerdaze.co.uk'
         '''
-        return self.__full_domain
+        return self.__full_domain.decode('idna')
 
     def __str__(self):
         u'''Returns the full domain name, in punycode (if necessary).
@@ -193,9 +261,7 @@ class Domain(object):
         >>> str(Domain('www.brokerdaze.xn--p1ai'))
         'www.brokerdaze.xn--p1ai'
         '''
-        frags = [self.subdomain] if self.subdomain else []
-        frags.extend([self.sld.encode('idna'), self.tld.encode('idna')])
-        return '.'.join(frags)
+        return self.__full_domain
 
     def __eq__(self, other):
         '''Ensures that two ``Domain`` objects with the same domain name are
@@ -254,3 +320,4 @@ class Domain(object):
             for line in data:
                 parse_string(line)
         return result
+

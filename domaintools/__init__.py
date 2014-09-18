@@ -11,9 +11,6 @@ import dns.query
 import logging
 import re
 from urlparse import urlparse
-#from data import (
-#    cctlds, cctld_slds, fake_tlds, no_custom_slds, some_custom_slds) #, tlds)
-
 try:
     from .data import TLDS
 except:
@@ -22,7 +19,6 @@ except:
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
-#logger.setLevel(logging.INFO)
 
 def cached_property(f):
     '''Decorator which caches property values.
@@ -43,29 +39,6 @@ def cached_property(f):
     # needed so that doctests are properly discovered
     cached.__doc__ = f.__doc__
     return property(cached)
-"""
-def parse_data_file(filename):
-    # file is at https://publicsuffix.org/list/effective_tld_names.dat
-    f = open(filename)
-    private = False
-    tlds = {}
-    for line in f:
-        line = line.strip().decode('utf8')
-        if line.startswith('// ===BEGIN PRIVATE DOMAINS==='):
-            private = True
-            continue
-        if not line or line.startswith('//'):
-            continue
-        line = line.encode('idna')
-        frags = line.split('.')
-        if frags[-1] not in tlds:
-            tlds[frags[-1]] = {}
-        tlds[frags[-1]][line] = private
-    
-    return tlds
-
-TLDS = parse_data_file('/home/jayte/domaintools/domaintools/effective_tld_names.dat')
-"""
 
 class Domain(object):
     '''Handles parsing domains. All domain names are canonicalized 
@@ -82,7 +55,7 @@ class Domain(object):
     def __init__(self, domain_string, allow_private=False):
         if not TLDS:
             raise Exception('TLDs could not be loaded from data.py. To create '
-                'the file, run _____') 
+                'the file, run build_data_file.py') 
         if u':' in domain_string:
             # strip out port numbers
             domain_string, port = domain_string.rsplit(u':', 1)

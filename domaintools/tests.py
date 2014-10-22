@@ -70,6 +70,8 @@ invalid_domains = [
     u'goat.bn',
     # test-period unicode tld (no longer in use)
     u'test.テスト',
+    # incorrect formatting
+    u'.goat.com',
     ]
 
 invalid_private_domains = [

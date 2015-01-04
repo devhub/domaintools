@@ -61,7 +61,10 @@ class Domain(object):
             domain_string, port = domain_string.rsplit(u':', 1)
         self.allow_private = allow_private
         self.__private = False
-        self.__full_domain = domain_string.lower().encode('idna')
+        try:
+            self.__full_domain = domain_string.lower().encode('idna')
+        except:
+            self.__full_domain = domain_string.lower()
         self.__domain_parts = self.__full_domain.split('.')
         if self.__domain_parts[-1] == u'':
             self.__domain_parts.pop()

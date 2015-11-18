@@ -52,6 +52,8 @@ class Domain(object):
     '''
     __whitespace_regex = re.compile(ur'\s+')
 
+    __domain_part_regex = re.compile(ur'^[a-zA-Z0-9\*]([a-zA-Z0-9\-]*[a-zA-Z0-9]){0,62}')
+
     def __init__(self, domain_string, allow_private=False):
         if not TLDS:
             raise Exception('TLDs could not be loaded from data.py. To create '
@@ -204,6 +206,15 @@ class Domain(object):
         '''
         if self.tld is None or self.sld is None or '' in self.__domain_parts:
             return False
+        for part in self.__domain_parts:
+            if len(part) > 63:
+                return False
+            if part[-1] == '-':
+                return False
+            if part[0] == '*' and len(part) > 1:
+                return False
+            if self.__domain_part_regex.match(part) is None:
+                return False
         return True
 
     @cached_property

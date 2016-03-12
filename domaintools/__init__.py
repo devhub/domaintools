@@ -52,7 +52,7 @@ class Domain(object):
     '''
     __whitespace_regex = re.compile(ur'\s+')
 
-    __domain_part_regex = re.compile(ur'^[a-zA-Z0-9\*]([a-zA-Z0-9\-]*[a-zA-Z0-9]){0,62}')
+    __domain_part_regex = re.compile(ur'(?!-)[A-Z\d-]{1,63}(?<!-)$', re.IGNORECASE)
 
     def __init__(self, domain_string, allow_private=False):
         if not TLDS:
@@ -215,6 +215,37 @@ class Domain(object):
                 return False
             if self.__domain_part_regex.match(part) is None:
                 return False
+        return True
+
+    @cached_property
+    def valid_host(self):
+        '''Determines if the domain is valid.
+
+        :returns: True if valid, False otherwise.
+        :rtype: bool
+
+        >>> d = Domain(u'www.brokerdaze.co.uk')
+        >>> d.valid
+        True
+        >>> d = Domain(u'foo')
+        >>> d.valid
+        False
+        '''
+        if self.tld is None or self.sld is None or '' in self.__domain_parts:
+            return False
+        ix = 0
+        for part in self.__domain_parts:
+            if len(part) > 63:
+                return False
+            if part[-1] == '-':
+                return False
+            if part[0] == '*' and len(part) > 1:
+                return False
+            if part[0] == '*' and len(part) == 1 and ix == 0:
+                continue
+            if self.__domain_part_regex.match(part) is None:
+                return False
+            ix += 1
         return True
 
     @cached_property

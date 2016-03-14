@@ -206,6 +206,8 @@ class Domain(object):
         '''
         if self.tld is None or self.sld is None or '' in self.__domain_parts:
             return False
+        if self.__full_domain > 253:
+            return False
         for part in self.__domain_parts:
             if len(part) > 63:
                 return False
@@ -233,19 +235,21 @@ class Domain(object):
         '''
         if self.tld is None or self.sld is None or '' in self.__domain_parts:
             return False
+        if self.__full_domain > 253:
+            return False
         ix = 0
         for part in self.__domain_parts:
+            ix += 1
             if len(part) > 63:
                 return False
             if part[-1] == '-':
                 return False
             if part[0] == '*' and len(part) > 1:
                 return False
-            if part[0] == '*' and len(part) == 1 and ix == 0:
+            if part[0] == '*' and len(part) == 1 and ix == 1:
                 continue
             if self.__domain_part_regex.match(part) is None:
                 return False
-            ix += 1
         return True
 
     @cached_property

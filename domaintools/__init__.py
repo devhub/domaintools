@@ -206,7 +206,7 @@ class Domain(object):
         '''
         if self.tld is None or self.sld is None or '' in self.__domain_parts:
             return False
-        if self.__full_domain > 253:
+        if len(self.__full_domain) > 253:
             return False
         for part in self.__domain_parts:
             if len(part) > 63:
@@ -235,7 +235,7 @@ class Domain(object):
         '''
         if self.tld is None or self.sld is None or '' in self.__domain_parts:
             return False
-        if self.__full_domain > 253:
+        if len(self.__full_domain) > 253:
             return False
         ix = 0
         for part in self.__domain_parts:

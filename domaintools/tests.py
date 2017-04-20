@@ -42,8 +42,6 @@ valid_domains = [
     (u'goat.wtf', 'wtf', 'goat', None, False),
     # wildcard
     (u'goat.com.bn', 'com.bn', 'goat', None, False),
-    # include *
-    (u'*.google.com', 'com', 'google', '*', False),
     ]
 
 valid_private_domains = [
@@ -82,6 +80,8 @@ invalid_domains = [
     u'a-.google.com',
     # include *
     u'*a.google.com',
+    # include *
+    u'*.google.com',
     ]
 
 invalid_private_domains = [

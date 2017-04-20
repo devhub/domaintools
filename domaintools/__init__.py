@@ -52,7 +52,7 @@ class Domain(object):
     '''
     __whitespace_regex = re.compile(ur'\s+')
 
-    __domain_part_regex = re.compile(ur'(?!-)[A-Z\d-]{1,63}(?<!-)$', re.IGNORECASE)
+    __domain_part_regex = re.compile(ur'(?!-)[A-Z\d\-_]{1,63}(?<!-)$', re.IGNORECASE)
 
     def __init__(self, domain_string, allow_private=False):
         if not TLDS:

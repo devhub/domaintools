@@ -42,6 +42,8 @@ valid_domains = [
     (u'goat.wtf', 'wtf', 'goat', None, False),
     # wildcard
     (u'goat.com.bn', 'com.bn', 'goat', None, False),
+    # include _
+    (u'hnzd8.weishangok_com.ag1671.com', 'com', 'ag1671', 'hnzd8.weishangok_com', False),
     ]
 
 valid_private_domains = [

@@ -10,7 +10,13 @@ import dns.resolver
 import dns.query
 import logging
 import re
-from urlparse import urlparse
+import sys
+
+if sys.version_info < (3, 0):
+    from urlparse import urlparse
+else:
+    from urllib.parse import urlparse
+
 try:
     from .data import TLDS
 except:
@@ -50,9 +56,14 @@ class Domain(object):
     :param domain_string: the domain name to parse.
     :type domain_string: unicode
     '''
-    __whitespace_regex = re.compile(ur'\s+')
+    __whitespace_regex = re.compile(r'\s+')
+    __domain_part_regex = re.compile(r'(?!-)[A-Z\d-]{1,63}(?<!-)$', re.IGNORECASE)
 
-    __domain_part_regex = re.compile(ur'(?!-)[A-Z\d-]{1,63}(?<!-)$', re.IGNORECASE)
+    try:
+        __whitespace_regex = __whitespace_regex.decode('raw_unicode_escape')
+        __domain_part_regex = __domain_part_regex.decode('raw_unicode_escape')
+    except AttributeError:
+        pass
 
     def __init__(self, domain_string, allow_private=False):
         if not TLDS:

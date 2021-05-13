@@ -6,11 +6,13 @@
 .. moduleauthor:: Mark Lee <markl@evomediagroup.com>
 .. moduleauthor:: Gerald Thibault <jt@evomediagroup.com>
 '''
-import dns.resolver
-import dns.query
 import logging
 import re
 from urlparse import urlparse
+
+import dns.resolver
+import dns.query
+
 try:
     from .data import TLDS
 except:
@@ -19,6 +21,11 @@ except:
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
+
+WHITESPACE_REGEX = re.compile(ur'\s+')
+
+DOMAIN_PART_REGEX = re.compile(ur'(?!-)[A-Z\d-]{1,63}(?<!-)$', re.IGNORECASE)
+
 
 def cached_property(f):
     '''Decorator which caches property values.
@@ -40,6 +47,7 @@ def cached_property(f):
     cached.__doc__ = f.__doc__
     return property(cached)
 
+
 class Domain(object):
     '''Handles parsing domains. All domain names are canonicalized 
         via lowercasing and conversion to punycode. __unicode__ will
@@ -50,9 +58,6 @@ class Domain(object):
     :param domain_string: the domain name to parse.
     :type domain_string: unicode
     '''
-    __whitespace_regex = re.compile(ur'\s+')
-
-    __domain_part_regex = re.compile(ur'(?!-)[A-Z\d-]{1,63}(?<!-)$', re.IGNORECASE)
 
     def __init__(self, domain_string, allow_private=False):
         if not TLDS:
@@ -67,22 +72,22 @@ class Domain(object):
             self.__full_domain = domain_string.lower().encode('idna')
         except:
             self.__full_domain = domain_string.lower()
-        self.__domain_parts = self.__full_domain.split('.')
-        if self.__domain_parts[-1] == u'':
+        self.__domain_parts = self.__full_domain.split(b'.')
+        if self.__domain_parts[-1] == b'':
             self.__domain_parts.pop()
 
     @cached_property
     def domain(self):
         '''The full domain name (second level domain + top level domain)
 
-        :rtype: unicode, or None if the domain name is invalid.
+        :rtype: bytes, or None if the domain name is invalid.
 
         >>> d = Domain(u'www.brokerdaze.co.uk')
         >>> d.domain
-        u'brokerdaze.co.uk'
+        b'brokerdaze.co.uk'
         '''
         if self.valid:
-            return '%s.%s' % (self.sld, self.tld)
+            return b'%s.%s' % (self.sld, self.tld)
         else:
             return None
 
@@ -90,16 +95,16 @@ class Domain(object):
     def sld(self):
         '''The second level domain (SLD).
 
-        :rtype: unicode, or None if the SLD does not exist.
+        :rtype: bytes, or None if the SLD does not exist.
 
         >>> d = Domain(u'www.brokerdaze.co.uk')
         >>> d.sld
-        u'brokerdaze'
+        b'brokerdaze'
         '''
         result = None
         tld = self.tld
         if tld is not None:
-            dots = tld.count('.')
+            dots = tld.count(b'.')
             if dots == len(self.__domain_parts) - 1:
                 return None
             result = self.__domain_parts[-2-dots]
@@ -109,30 +114,30 @@ class Domain(object):
     def subdomain(self):
         '''The subdomain (i.e., www).
 
-        :rtype: unicode, or None if the subdomain does not exist.
+        :rtype: bytes, or None if the subdomain does not exist.
 
         >>> d = Domain(u'www.brokerdaze.co.uk')
         >>> d.subdomain
-        u'www'
+        b'www'
         '''
         result = None
         tld = self.tld
         if tld is not None:
-            dots = tld.count('.')
+            dots = tld.count(b'.')
             if dots == len(self.__domain_parts) - 2:
                 return None
-            result = '.'.join(self.__domain_parts[:-2-dots])
+            result = b'.'.join(self.__domain_parts[:-2-dots])
         return result
 
     @cached_property
     def tld(self):
         '''The top level domain (TLD) (i.e., co.uk).
 
-        :rtype: unicode, or None if the TLD is invalid.
+        :rtype: bytes, or None if the TLD is invalid.
 
         >>> d = Domain(u'www.brokerdaze.co.uk')
         >>> d.tld
-        u'co.uk'
+        b'co.uk'
         '''
         logger.info('Parsing TLD for domain: %s' % self.__full_domain)
         result = None
@@ -144,7 +149,7 @@ class Domain(object):
             choices = TLDS[tld]
             for i in range(len(self.__domain_parts)):
                 _parts = self.__domain_parts[-1-i:]
-                check = '.'.join(_parts)
+                check = b'.'.join(_parts)
                 logger.info('  Checking %s' % check)
                 if check in choices:
                     logger.info('    Found match')  
@@ -165,7 +170,7 @@ class Domain(object):
                     # do not try wildcard matches on single components
                     continue
                 # check for wildcard
-                check2 = '.'.join(['*'] + _parts[1:])
+                check2 = b'.'.join([b'*'] + _parts[1:])
                 logger.info('  Checking %s' % check2)
                 if check2 in choices:
                     # wildcard found in choices, the tested tld is valid
@@ -204,51 +209,35 @@ class Domain(object):
         >>> d.valid
         False
         '''
-        if self.tld is None or self.sld is None or '' in self.__domain_parts:
+        if not self.valid_host:
             return False
-        if len(self.__full_domain) > 253:
+        if self.__domain_parts[0] == b'*':
+            # wildcard pattern
             return False
-        for part in self.__domain_parts:
-            if len(part) > 63:
-                return False
-            if part[-1] == '-':
-                return False
-            if part[0] == '*' and len(part) > 1:
-                return False
-            if self.__domain_part_regex.match(part) is None:
-                return False
         return True
 
     @cached_property
     def valid_host(self):
-        '''Determines if the domain is valid.
+        '''Determines if the host is valid.
 
         :returns: True if valid, False otherwise.
         :rtype: bool
 
-        >>> d = Domain(u'www.brokerdaze.co.uk')
-        >>> d.valid
-        True
-        >>> d = Domain(u'foo')
+        >>> d = Domain(u'*.brokerdaze.co.uk')
         >>> d.valid
         False
+        >>> d.valid_host
+        True
         '''
-        if self.tld is None or self.sld is None or '' in self.__domain_parts:
+        if self.tld is None or self.sld is None:
             return False
         if len(self.__full_domain) > 253:
             return False
-        ix = 0
-        for part in self.__domain_parts:
-            ix += 1
-            if len(part) > 63:
-                return False
-            if part[-1] == '-':
-                return False
-            if part[0] == '*' and len(part) > 1:
-                return False
-            if part[0] == '*' and len(part) == 1 and ix == 1:
+        for i, part in enumerate(self.__domain_parts):
+            if part == b'*' and i == 0:
+                # wildcard pattern
                 continue
-            if self.__domain_part_regex.match(part) is None:
+            if DOMAIN_PART_REGEX.match(part) is None:
                 return False
         return True
 
@@ -276,7 +265,7 @@ class Domain(object):
         return self.__full_domain.decode('idna')
 
     def __str__(self):
-        u'''Returns the full domain name, in punycode (if necessary).
+        '''Returns the full domain name, in punycode (if necessary).
 
         >>> str(Domain(u'www.brokerdaze.рф'))
         'www.brokerdaze.xn--p1ai'
@@ -327,7 +316,7 @@ class Domain(object):
         result = []
 
         def parse_string(string):
-            for section in re.split(cls.__whitespace_regex, string.strip()):
+            for section in re.split(WHITESPACE_REGEX, string.strip()):
                 if '://' in section:
                     # assume it's a URL instead of a bare domain name
                     url = urlparse(section)

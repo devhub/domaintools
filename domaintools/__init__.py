@@ -253,4 +253,3 @@ class Domain(object):
             for line in data:
                 parse_string(line)
         return result
-

@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 extract_private = TLDExtract('.private', include_psl_private_domains=True)
 
-DOMAIN_PART_REGEX = re.compile(r'(?!-)[A-Z\d-]{1,63}(?<!-)$', re.IGNORECASE)
+DOMAIN_PART_REGEX = re.compile(br'(?!-)[A-Z\d-]{1,63}(?<!-)$', re.IGNORECASE)
 
 
 class Domain(object):
@@ -123,7 +123,7 @@ class Domain(object):
         '''
         if not self.valid_host:
             return False
-        if self.labels[0] == '*':
+        if self.labels[0] == b'*':
             # wildcard pattern
             return False
         return True
@@ -146,7 +146,7 @@ class Domain(object):
         if len(self.text) > 253:
             return False
         for i, part in enumerate(self.labels):
-            if part == '*' and i == 0:
+            if part == b'*' and i == 0:
                 # wildcard pattern
                 continue
             if DOMAIN_PART_REGEX.match(part) is None:

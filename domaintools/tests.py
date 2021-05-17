@@ -1,7 +1,8 @@
 # encoding: utf8
 import unittest
 
-from . import Domain
+from domaintools import Domain
+from domaintools.utils import normalize_domain
 
 
 # input, tld, sld, subdomain, private
@@ -95,6 +96,21 @@ invalid_private_domains = [
 
 
 class TestDomainTools(unittest.TestCase):
+
+    def test_normalize_domain(self):
+        domains = (
+            b'xn--p1ai.xn--p1ai',
+            b'\xd1\x80\xd1\x84.xn--p1ai',
+            b'\xd1\x80\xd1\x84.\xd1\x80\xd1\x84',
+            b'xn--p1ai.\xd1\x80\xd1\x84',
+            u'xn--p1ai.xn--p1ai',
+            u'рф.xn--p1ai',
+            u'рф.рф',
+            u'xn--p1ai.рф',
+        )
+        for domain_name in domains:
+            rv = normalize_domain(domain_name)
+            self.assertEqual(u'рф.рф', rv)
 
     def test_wildcard_parsing(self):
         ''' wildcard domains should yield a valid host and invalid domain '''

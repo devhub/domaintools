@@ -20,8 +20,6 @@ logger = logging.getLogger(__name__)
 
 extract_private = TLDExtract('.private', include_psl_private_domains=True)
 
-WHITESPACE_REGEX = re.compile(ur'\s+')
-
 DOMAIN_PART_REGEX = re.compile(ur'(?!-)[A-Z\d-]{1,63}(?<!-)$', re.IGNORECASE)
 
 
@@ -220,36 +218,3 @@ class Domain(object):
         True
         '''
         return not self.__eq__(other)
-
-    @classmethod
-    def extract(cls, data):
-        '''Extracts domain objects from a string with spaces and line breaks.
-
-        :param data: The data to parse the domain names out of.
-        :type data: a unicode string or a file-like object
-        :returns: A list of extracted domains.
-        :rtype: list
-
-        >>> Domain.extract(u"""www.foo.com notadomain baz.bar.net
-        ... quux.something.co.za\\tone.two\\t\\tthree.cc""")
-        ... # doctest: +ELLIPSIS
-        [<...foo.com>, <...bar.net>, <...something.co.za>, <... three.cc>]
-        '''
-        result = []
-
-        def parse_string(string):
-            for section in re.split(WHITESPACE_REGEX, string.strip()):
-                if '://' in section:
-                    # assume it's a URL instead of a bare domain name
-                    url = urlparse(section)
-                    if url.hostname is not None:
-                        section = url.hostname
-                d = Domain(section)
-                if d.valid:
-                    result.append(d)
-        if isinstance(data, unicode):
-            parse_string(data)
-        elif hasattr(data, '__iter__'):
-            for line in data:
-                parse_string(line)
-        return result

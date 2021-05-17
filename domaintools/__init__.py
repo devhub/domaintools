@@ -8,7 +8,6 @@
 '''
 import logging
 import re
-from urlparse import urlparse
 
 from tldextract import extract, TLDExtract
 
@@ -20,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 extract_private = TLDExtract('.private', include_psl_private_domains=True)
 
-DOMAIN_PART_REGEX = re.compile(ur'(?!-)[A-Z\d-]{1,63}(?<!-)$', re.IGNORECASE)
+DOMAIN_PART_REGEX = re.compile(r'(?!-)[A-Z\d-]{1,63}(?<!-)$', re.IGNORECASE)
 
 
 class Domain(object):

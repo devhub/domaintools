@@ -6,11 +6,14 @@
 .. moduleauthor:: Mark Lee <markl@evomediagroup.com>
 .. moduleauthor:: Gerald Thibault <jt@evomediagroup.com>
 '''
+from __future__ import absolute_import
 import dns.resolver
 import dns.query
 import logging
 import re
-from urlparse import urlparse
+from six.moves.urllib.parse import urlparse
+import six
+from six.moves import range
 try:
     from .data import TLDS
 except:
@@ -50,9 +53,9 @@ class Domain(object):
     :param domain_string: the domain name to parse.
     :type domain_string: unicode
     '''
-    __whitespace_regex = re.compile(ur'\s+')
+    __whitespace_regex = re.compile(r'\s+')
 
-    __domain_part_regex = re.compile(ur'(?!-)[A-Z\d-]{1,63}(?<!-)$', re.IGNORECASE)
+    __domain_part_regex = re.compile(r'(?!-)[A-Z\d-]{1,63}(?<!-)$', re.IGNORECASE)
 
     def __init__(self, domain_string, allow_private=False):
         if not TLDS:
@@ -336,7 +339,7 @@ class Domain(object):
                 d = Domain(section)
                 if d.valid:
                     result.append(d)
-        if isinstance(data, unicode):
+        if isinstance(data, six.text_type):
             parse_string(data)
         elif hasattr(data, '__iter__'):
             for line in data:

@@ -9,4 +9,7 @@ setup(
     author='DevHub',
     url='http://github.com/devhub/domaintools',
     packages=find_packages(),
+    install_requires=[
+        'tldextract == 2.2.3',
+    ]
 )
